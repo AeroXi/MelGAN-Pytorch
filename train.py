@@ -28,12 +28,13 @@ train_loader = DataLoader(train_dataset, batch_size=hps.train.batch_size, shuffl
                           **kwargs)
 test_loader = DataLoader(test_dataset, batch_size=hps.train.batch_size, collate_fn=collate_fn,
                           **kwargs)
-
+iteration = 1
 generator = models.Generator(hps.data.n_channels).to(device)
 discriminator = models.MultiScaleDiscriminator().to(device)
 optimizer_g = optim.Adam(generator.parameters(), lr=hps.train.learning_rate)
 optimizer_d = optim.Adam(discriminator.parameters(), lr=hps.train.learning_rate)
-
+generator, optimizer_g, _, iteration = utils.load_checkpoint("logs/exp1/G_488.pth", generator, optimizer_g)
+discriminator, optimizer_d, _, _ = utils.load_checkpoint("logs/exp1/D_488.pth", discriminator, optimizer_d)
 
 def feature_matching_loss(rs_t, rs_f):
   l_tot = 0
@@ -96,9 +97,10 @@ def train(epoch):
 
 
 if __name__ == "__main__":
-  for epoch in range(1, hps.train.epochs + 1):
+  for epoch in range(iteration, hps.train.epochs + 1):
     train(epoch)
-    utils.save_checkpoint(generator, optimizer_g, hps.train.learning_rate, epoch, os.path.join(hps.model_dir, "G_{}.pth".format(epoch)))
-    utils.save_checkpoint(discriminator, optimizer_d, hps.train.learning_rate, epoch, os.path.join(hps.model_dir, "D_{}.pth".format(epoch)))
+    if epoch % 10 == 0:
+        utils.save_checkpoint(generator, optimizer_g, hps.train.learning_rate, epoch, os.path.join(hps.model_dir, "G_{}.pth".format(epoch)))
+        utils.save_checkpoint(discriminator, optimizer_d, hps.train.learning_rate, epoch, os.path.join(hps.model_dir, "D_{}.pth".format(epoch)))
 
                             
